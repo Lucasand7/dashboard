@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Tráfego Pago</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      padding: 10px 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .navbar h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #333;
+    }
+    .navbar .filters {
+      display: flex;
+      gap: 10px;
+    }
+    .navbar select, .navbar button {
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .widget {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .widget h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .chart-container {
+      width: 100%;
+      height: 300px;
+    }
+    .heatmap {
+      width: 100%;
+      height: 400px;
+    }
+    .funnel-chart {
+      width: 100%;
+      height: 300px;
+    }
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+    .suggestions {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 20px;
+    }
+    .suggestions ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h1>Dashboard de Tráfego Pago</h1>
+    <div class="filters">
+      <select id="time-filter">
+        <option value="daily">Diário</option>
+        <option value="weekly">Semanal</option>
+        <option value="monthly">Mensal</option>
+        <option value="custom">Personalizado</option>
+      </select>
+      <button onclick="exportData()">Exportar Relatório</button>
+    </div>
+  </div>
+  <div class="dashboard">
+    <!-- Visão Geral -->
+    <div class="widget">
+      <h2>Visão Geral</h2>
+      <div id="overview-chart" class="chart-container"></div>
+    </div>
+    <!-- Desempenho por Canal -->
+    <div class="widget">
+      <h2>Desempenho por Canal</h2>
+      <div id="channel-performance-chart" class="chart-container"></div>
+    </div>
+    <!-- Segmentação -->
+    <div class="widget">
+      <h2>Segmentação</h2>
+      <div id="segmentation-chart" class="chart-container"></div>
+    </div>
+    <!-- Mapa de Calor -->
+    <div class="widget">
+      <h2>Análise Geográfica</h2>
+      <div id="heatmap" class="heatmap"></div>
+    </div>
+    <!-- Funil de Conversão -->
+    <div class="widget">
+      <h2>Funil de Conversão</h2>
+      <div id="funnel-chart" class="funnel-chart"></div>
+    </div>
+  </div>
+  <div class="suggestions">
+    <h2>Sugestões de Otimização</h2>
+    <ul id="optimization-suggestions">
+      <li>Aumente o orçamento para campanhas com CTR acima de 2%.</li>
+      <li>Reduza CPC em campanhas com baixa taxa de conversão.</li>
+      <li>Foque em públicos-alvo com maior engajamento.</li>
+    </ul>
+  </div>
+
+  <script>
+    // Gráfico de Visão Geral
+    const overviewCtx = document.getElementById('overview-chart').getContext('2d');
+    const overviewChart = new Chart(overviewCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Impressões', 'Cliques', 'Conversões'],
+        datasets: [{
+          label: 'Total',
+          data: [50000, 12000, 3000],
+          backgroundColor: ['#4CAF50', '#FF9800', '#03A9F4']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    // Gráfico de Desempenho por Canal
+    const channelPerformanceCtx = document.getElementById('channel-performance-chart').getContext('2d');
+    const channelPerformanceChart = new Chart(channelPerformanceCtx, {
+      type: 'line',
+      data: {
+        labels: ['Google Ads', 'Facebook Ads', 'Instagram Ads', 'LinkedIn Ads'],
+        datasets: [{
+          label: 'CTR (%)',
+          data: [2.5, 1.8, 2.2, 1.5],
+          borderColor: '#FF5722',
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+
+    // Gráfico de Segmentação
+    const segmentationCtx = document.getElementById('segmentation-chart').getContext('2d');
+    const segmentationChart = new Chart(segmentationCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Desktop', 'Mobile', 'Tablet'],
+        datasets: [{
+          data: [40, 50, 10],
+          backgroundColor: ['#E91E63', '#673AB7', '#FFC107']
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+
+    // Mapa de Calor
+    var heatmapOptions = {
+      chart: {
+        type: 'heatmap',
+        height: 400
+      },
+      dataLabels: {
+        enabled: false
+      },
+      colors: ['#008FFB'],
+      series: [{
+        name: 'Jan',
+        data: generateHeatmapData(10)
+      }, {
+        name: 'Feb',
+        data: generateHeatmapData(10)
+      }],
+      xaxis: {
+        labels: {
+          show: true
+        }
+      }
+    };
+    var heatmap = new ApexCharts(document.querySelector("#heatmap"), heatmapOptions);
+    heatmap.render();
+
+    function generateHeatmapData(count) {
+      var data = [];
+      for (var i = 0; i < count; i++) {
+        data.push([i, Math.floor(Math.random() * 100)]);
+      }
+      return data;
+    }
+
+    // Funil de Conversão
+    var funnelOptions = {
+      chart: {
+        type: 'bar',
+        height: 300
+      },
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          barHeight: '80%'
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      colors: ['#FF9800', '#03A9F4', '#4CAF50'],
+      series: [{
+        data: [100, 70, 30]
+      }],
+      xaxis: {
+        categories: ['Visualização', 'Adição ao Carrinho', 'Compra']
+      }
+    };
+    var funnelChart = new ApexCharts(document.querySelector("#funnel-chart"), funnelOptions);
+    funnelChart.render();
+
+    // Exportar Dados
+    function exportData() {
+      Email.send({
+        Host: "smtp.elasticemail.com",
+        Username: "your-email@example.com",
+        Password: "your-email-password",
+        To: 'recipient@example.com',
+        From: "your-email@example.com",
+        Subject: "Relatório de Tráfego Pago",
+        Body: "Segue o relatório exportado do dashboard.",
+        Attachments: [
+          {
+            name: "relatorio.csv",
+            path: "data:text/csv;charset=utf-8," + encodeURIComponent("Impressões,Cliques,Conversões\n50000,12000,3000")
+          }
+        ]
+      }).then(
+        message => alert("Relatório enviado com sucesso!")
+      );
+    }
+  </script>
+</body>
+</html>
