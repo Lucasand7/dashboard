@@ -3,272 +3,935 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Tráfego Pago</title>
+  <title>Dashboard Avançado de Tráfego Pago</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <script src="https://smtpjs.com/v3/smtp.js"></script>
+  <script src="config.js"></script>
+  <script src="data-generator.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f6f8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
     }
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #fff;
-      padding: 10px 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
-    .navbar h1 {
-      margin: 0;
-      font-size: 24px;
-      color: #333;
+    
+    .metric-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
     }
-    .navbar .filters {
-      display: flex;
-      gap: 10px;
+    
+    .metric-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     }
-    .navbar select, .navbar button {
-      padding: 5px 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    .widget {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-    }
-    .widget h2 {
-      margin-top: 0;
-      font-size: 18px;
-      color: #333;
-    }
+    
     .chart-container {
-      width: 100%;
-      height: 300px;
-    }
-    .heatmap {
-      width: 100%;
-      height: 400px;
-    }
-    .funnel-chart {
-      width: 100%;
-      height: 300px;
-    }
-    @media (max-width: 768px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
-    }
-    .suggestions {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
       padding: 20px;
-      margin: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
-    .suggestions ul {
-      list-style-type: disc;
-      padding-left: 20px;
+    
+    .trend-up {
+      color: #10b981;
+    }
+    
+    .trend-down {
+      color: #ef4444;
+    }
+    
+    .sidebar {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .animated-counter {
+      animation: countUp 1s ease-out;
+    }
+    
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .loading-skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .performance-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .performance-excellent {
+      background: rgba(16, 185, 129, 0.2);
+      color: #059669;
+    }
+    
+    .performance-good {
+      background: rgba(245, 158, 11, 0.2);
+      color: #d97706;
+    }
+    
+    .performance-poor {
+      background: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
     }
   </style>
 </head>
-<body>
-  <div class="navbar">
-    <h1>Dashboard de Tráfego Pago</h1>
-    <div class="filters">
-      <select id="time-filter">
-        <option value="daily">Diário</option>
-        <option value="weekly">Semanal</option>
-        <option value="monthly">Mensal</option>
-        <option value="custom">Personalizado</option>
-      </select>
-      <button onclick="exportData()">Exportar Relatório</button>
+<body class="bg-gray-100">
+  <!-- Header -->
+  <nav class="glassmorphism mx-4 mt-4 px-6 py-4">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-2xl font-bold text-white">
+          <i class="fas fa-chart-line mr-2"></i>
+          Dashboard de Tráfego Pago
+        </h1>
+        <div class="flex space-x-2">
+          <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm">
+            <i class="fas fa-circle animate-pulse mr-1"></i>Ao Vivo
+          </span>
+        </div>
+      </div>
+      
+      <!-- Filtros -->
+      <div class="flex items-center space-x-4">
+        <div class="flex space-x-2">
+          <select id="timeRange" class="filter-pill px-4 py-2 rounded-lg text-white focus:outline-none">
+            <option value="today">Hoje</option>
+            <option value="yesterday">Ontem</option>
+            <option value="7days">Últimos 7 dias</option>
+            <option value="30days" selected>Últimos 30 dias</option>
+            <option value="90days">Últimos 90 dias</option>
+            <option value="custom">Personalizado</option>
+          </select>
+          
+          <select id="channelFilter" class="filter-pill px-4 py-2 rounded-lg text-white focus:outline-none">
+            <option value="all">Todos os Canais</option>
+            <option value="google">Google Ads</option>
+            <option value="facebook">Meta Ads</option>
+            <option value="instagram">Instagram</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="tiktok">TikTok</option>
+            <option value="youtube">YouTube</option>
+          </select>
+        </div>
+        
+        <button onclick="exportReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <i class="fas fa-download mr-2"></i>Exportar
+        </button>
+        
+        <button onclick="toggleAutoRefresh()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <i class="fas fa-sync-alt mr-2" id="refreshIcon"></i>Auto Refresh
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="dashboard">
-    <!-- Visão Geral -->
-    <div class="widget">
-      <h2>Visão Geral</h2>
-      <div id="overview-chart" class="chart-container"></div>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <div class="flex mx-4 mt-4 space-x-4">
+    <!-- Sidebar with Quick Stats -->
+    <div class="sidebar w-80 p-6 rounded-2xl">
+      <h3 class="text-white font-semibold mb-4">Resumo Executivo</h3>
+      
+      <!-- KPIs Principais -->
+      <div class="space-y-4">
+        <div class="metric-card p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-600 text-sm">Investimento Total</p>
+              <p class="text-2xl font-bold text-gray-800 animated-counter" id="totalSpend">R$ 125.450</p>
+            </div>
+            <div class="text-right">
+              <span class="performance-indicator performance-good">
+                <i class="fas fa-arrow-up mr-1"></i>12.5%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-600 text-sm">ROAS</p>
+              <p class="text-2xl font-bold text-gray-800 animated-counter" id="roas">4.8x</p>
+            </div>
+            <div class="text-right">
+              <span class="performance-indicator performance-excellent">
+                <i class="fas fa-arrow-up mr-1"></i>8.2%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-600 text-sm">CPA Médio</p>
+              <p class="text-2xl font-bold text-gray-800 animated-counter" id="avgCPA">R$ 45.20</p>
+            </div>
+            <div class="text-right">
+              <span class="performance-indicator performance-good">
+                <i class="fas fa-arrow-down mr-1"></i>3.1%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-600 text-sm">Taxa de Conversão</p>
+              <p class="text-2xl font-bold text-gray-800 animated-counter" id="conversionRate">3.24%</p>
+            </div>
+            <div class="text-right">
+              <span class="performance-indicator performance-excellent">
+                <i class="fas fa-arrow-up mr-1"></i>15.7%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Alertas e Insights -->
+      <div class="mt-6">
+        <h4 class="text-white font-semibold mb-3">Alertas Inteligentes</h4>
+        <div class="space-y-2">
+          <div class="bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded">
+            <p class="text-yellow-700 text-sm">
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              CPC do Google Ads aumentou 15% esta semana
+            </p>
+          </div>
+          <div class="bg-green-100 border-l-4 border-green-500 p-3 rounded">
+            <p class="text-green-700 text-sm">
+              <i class="fas fa-check-circle mr-2"></i>
+              Meta de ROAS superada em 20%
+            </p>
+          </div>
+          <div class="bg-blue-100 border-l-4 border-blue-500 p-3 rounded">
+            <p class="text-blue-700 text-sm">
+              <i class="fas fa-info-circle mr-2"></i>
+              Novo público com alto potencial identificado
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- Desempenho por Canal -->
-    <div class="widget">
-      <h2>Desempenho por Canal</h2>
-      <div id="channel-performance-chart" class="chart-container"></div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 space-y-6">
+      <!-- Top Metrics Row -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="metric-card p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Impressões</p>
+              <p class="text-3xl font-bold text-gray-800" id="impressions">2.8M</p>
+              <p class="text-sm text-green-600 mt-1">
+                <i class="fas fa-arrow-up mr-1"></i>+18.2% vs período anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+              <i class="fas fa-eye text-white text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Cliques</p>
+              <p class="text-3xl font-bold text-gray-800" id="clicks">89.5K</p>
+              <p class="text-sm text-green-600 mt-1">
+                <i class="fas fa-arrow-up mr-1"></i>+12.8% vs período anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <i class="fas fa-mouse-pointer text-white text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">CTR</p>
+              <p class="text-3xl font-bold text-gray-800" id="ctr">3.19%</p>
+              <p class="text-sm text-red-600 mt-1">
+                <i class="fas fa-arrow-down mr-1"></i>-2.1% vs período anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+              <i class="fas fa-percentage text-white text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-card p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm font-medium">Conversões</p>
+              <p class="text-3xl font-bold text-gray-800" id="conversions">2.9K</p>
+              <p class="text-sm text-green-600 mt-1">
+                <i class="fas fa-arrow-up mr-1"></i>+24.6% vs período anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+              <i class="fas fa-trophy text-white text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Performance ao Longo do Tempo -->
+        <div class="chart-container">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">Performance ao Longo do Tempo</h3>
+            <div class="flex space-x-2">
+              <button class="text-sm px-3 py-1 bg-blue-100 text-blue-600 rounded-full" onclick="updateTimeSeriesChart('impressions')">Impressões</button>
+              <button class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full" onclick="updateTimeSeriesChart('clicks')">Cliques</button>
+              <button class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full" onclick="updateTimeSeriesChart('conversions')">Conversões</button>
+            </div>
+          </div>
+          <canvas id="timeSeriesChart" height="300"></canvas>
+        </div>
+        
+        <!-- Performance por Canal -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance por Canal</h3>
+          <canvas id="channelChart" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Funil de Conversão -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Funil de Conversão</h3>
+          <div id="funnelChart"></div>
+        </div>
+        
+        <!-- Distribuição por Dispositivo -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Distribuição por Dispositivo</h3>
+          <canvas id="deviceChart" height="250"></canvas>
+        </div>
+        
+        <!-- Top Campanhas -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 5 Campanhas</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-800">Campanha Black Friday</p>
+                <p class="text-sm text-gray-600">Google Ads</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-800">R$ 25.4K</p>
+                <p class="text-sm text-green-600">ROAS: 6.2x</p>
+              </div>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-800">Promoção Verão</p>
+                <p class="text-sm text-gray-600">Meta Ads</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-800">R$ 18.9K</p>
+                <p class="text-sm text-green-600">ROAS: 4.8x</p>
+              </div>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-800">Lançamento Produto</p>
+                <p class="text-sm text-gray-600">LinkedIn</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-800">R$ 12.3K</p>
+                <p class="text-sm text-yellow-600">ROAS: 3.1x</p>
+              </div>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-800">Remarketing Premium</p>
+                <p class="text-sm text-gray-600">Google Ads</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-800">R$ 9.7K</p>
+                <p class="text-sm text-green-600">ROAS: 7.4x</p>
+              </div>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-800">Expansão Mercado</p>
+                <p class="text-sm text-gray-600">TikTok</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-800">R$ 8.1K</p>
+                <p class="text-sm text-red-600">ROAS: 2.3x</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Análise Geográfica e Horários -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Mapa de Calor Geográfico -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance Geográfica</h3>
+          <div id="geoHeatmap"></div>
+        </div>
+        
+        <!-- Performance por Horário -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance por Horário</h3>
+          <div id="hourlyHeatmap"></div>
+        </div>
+      </div>
+
+      <!-- Análise Avançada -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Cohort Analysis -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Análise de Coorte</h3>
+          <div id="cohortChart"></div>
+        </div>
+        
+        <!-- Attribution Analysis -->
+        <div class="chart-container">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Análise de Atribuição</h3>
+          <canvas id="attributionChart" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Recommendations Engine -->
+      <div class="chart-container">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+          <i class="fas fa-robot mr-2"></i>Recomendações Inteligentes
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-500">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-bullseye text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-blue-800">Otimização de Budget</h4>
+                <p class="text-sm text-blue-700 mt-1">Realocar 15% do budget do LinkedIn para Google Ads pode aumentar o ROAS em 22%</p>
+                <button class="text-blue-600 text-sm font-medium mt-2 hover:underline">Aplicar Sugestão</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border-l-4 border-green-500">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-users text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-green-800">Novo Público</h4>
+                <p class="text-sm text-green-700 mt-1">Audiência "Tech Early Adopters" mostra 340% mais conversões que a média</p>
+                <button class="text-green-600 text-sm font-medium mt-2 hover:underline">Expandir Público</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border-l-4 border-orange-500">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-clock text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-orange-800">Timing Otimizado</h4>
+                <p class="text-sm text-orange-700 mt-1">Pausar anúncios entre 2h-6h pode reduzir CPA em 18% sem perder conversões</p>
+                <button class="text-orange-600 text-sm font-medium mt-2 hover:underline">Ajustar Horários</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- Segmentação -->
-    <div class="widget">
-      <h2>Segmentação</h2>
-      <div id="segmentation-chart" class="chart-container"></div>
-    </div>
-    <!-- Mapa de Calor -->
-    <div class="widget">
-      <h2>Análise Geográfica</h2>
-      <div id="heatmap" class="heatmap"></div>
-    </div>
-    <!-- Funil de Conversão -->
-    <div class="widget">
-      <h2>Funil de Conversão</h2>
-      <div id="funnel-chart" class="funnel-chart"></div>
-    </div>
-  </div>
-  <div class="suggestions">
-    <h2>Sugestões de Otimização</h2>
-    <ul id="optimization-suggestions">
-      <li>Aumente o orçamento para campanhas com CTR acima de 2%.</li>
-      <li>Reduza CPC em campanhas com baixa taxa de conversão.</li>
-      <li>Foque em públicos-alvo com maior engajamento.</li>
-    </ul>
   </div>
 
   <script>
-    // Gráfico de Visão Geral
-    const overviewCtx = document.getElementById('overview-chart').getContext('2d');
-    const overviewChart = new Chart(overviewCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Impressões', 'Cliques', 'Conversões'],
-        datasets: [{
-          label: 'Total',
-          data: [50000, 12000, 3000],
-          backgroundColor: ['#4CAF50', '#FF9800', '#03A9F4']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
+    // Variáveis globais
+    let timeSeriesChart, channelChart, deviceChart, attributionChart;
+    let autoRefreshInterval;
+    let isAutoRefreshOn = false;
 
-    // Gráfico de Desempenho por Canal
-    const channelPerformanceCtx = document.getElementById('channel-performance-chart').getContext('2d');
-    const channelPerformanceChart = new Chart(channelPerformanceCtx, {
-      type: 'line',
-      data: {
-        labels: ['Google Ads', 'Facebook Ads', 'Instagram Ads', 'LinkedIn Ads'],
-        datasets: [{
-          label: 'CTR (%)',
-          data: [2.5, 1.8, 2.2, 1.5],
-          borderColor: '#FF5722',
-          borderWidth: 2,
-          fill: false
-        }]
+    // Dados simulados mais realistas
+    const mockData = {
+      timeSeries: {
+        labels: ['01/11', '02/11', '03/11', '04/11', '05/11', '06/11', '07/11', '08/11', '09/11', '10/11', '11/11', '12/11', '13/11', '14/11', '15/11'],
+        impressions: [185000, 192000, 178000, 205000, 198000, 212000, 189000, 195000, 203000, 187000, 199000, 208000, 194000, 201000, 196000],
+        clicks: [5890, 6120, 5670, 6450, 6280, 6720, 5980, 6180, 6430, 5940, 6310, 6580, 6150, 6370, 6220],
+        conversions: [189, 196, 182, 207, 201, 215, 192, 198, 206, 190, 202, 211, 197, 204, 199]
       },
-      options: {
-        responsive: true
-      }
-    });
-
-    // Gráfico de Segmentação
-    const segmentationCtx = document.getElementById('segmentation-chart').getContext('2d');
-    const segmentationChart = new Chart(segmentationCtx, {
-      type: 'pie',
-      data: {
-        labels: ['Desktop', 'Mobile', 'Tablet'],
-        datasets: [{
-          data: [40, 50, 10],
-          backgroundColor: ['#E91E63', '#673AB7', '#FFC107']
-        }]
+      channels: {
+        labels: ['Google Ads', 'Meta Ads', 'LinkedIn', 'TikTok', 'YouTube', 'Twitter'],
+        spend: [45200, 32800, 18600, 12400, 8900, 7550],
+        conversions: [1245, 892, 298, 156, 127, 94],
+        roas: [5.2, 4.8, 3.1, 2.3, 4.6, 3.8]
       },
-      options: {
-        responsive: true
-      }
-    });
-
-    // Mapa de Calor
-    var heatmapOptions = {
-      chart: {
-        type: 'heatmap',
-        height: 400
-      },
-      dataLabels: {
-        enabled: false
-      },
-      colors: ['#008FFB'],
-      series: [{
-        name: 'Jan',
-        data: generateHeatmapData(10)
-      }, {
-        name: 'Feb',
-        data: generateHeatmapData(10)
-      }],
-      xaxis: {
-        labels: {
-          show: true
-        }
+      devices: {
+        labels: ['Mobile', 'Desktop', 'Tablet'],
+        data: [58.3, 35.2, 6.5]
       }
     };
-    var heatmap = new ApexCharts(document.querySelector("#heatmap"), heatmapOptions);
-    heatmap.render();
 
-    function generateHeatmapData(count) {
-      var data = [];
-      for (var i = 0; i < count; i++) {
-        data.push([i, Math.floor(Math.random() * 100)]);
-      }
-      return data;
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+      setupEventListeners();
+      startDataSimulation();
+    });
+
+    function initializeCharts() {
+      // Time Series Chart
+      const timeCtx = document.getElementById('timeSeriesChart').getContext('2d');
+      timeSeriesChart = new Chart(timeCtx, {
+        type: 'line',
+        data: {
+          labels: mockData.timeSeries.labels,
+          datasets: [{
+            label: 'Impressões',
+            data: mockData.timeSeries.impressions,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              grid: {
+                color: 'rgba(0,0,0,0.1)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(0,0,0,0.1)'
+              }
+            }
+          }
+        }
+      });
+
+      // Channel Performance Chart
+      const channelCtx = document.getElementById('channelChart').getContext('2d');
+      channelChart = new Chart(channelCtx, {
+        type: 'bar',
+        data: {
+          labels: mockData.channels.labels,
+          datasets: [{
+            label: 'ROAS',
+            data: mockData.channels.roas,
+            backgroundColor: [
+              '#3b82f6',
+              '#10b981',
+              '#f59e0b',
+              '#ef4444',
+              '#8b5cf6',
+              '#06b6d4'
+            ],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.1)'
+              }
+            }
+          }
+        }
+      });
+
+      // Device Chart
+      const deviceCtx = document.getElementById('deviceChart').getContext('2d');
+      deviceChart = new Chart(deviceCtx, {
+        type: 'doughnut',
+        data: {
+          labels: mockData.devices.labels,
+          datasets: [{
+            data: mockData.devices.data,
+            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // Attribution Chart
+      const attrCtx = document.getElementById('attributionChart').getContext('2d');
+      attributionChart = new Chart(attrCtx, {
+        type: 'radar',
+        data: {
+          labels: ['First Touch', 'Last Touch', 'Linear', 'Position Based', 'Time Decay'],
+          datasets: [{
+            label: 'Conversões Atribuídas',
+            data: [1245, 2890, 2156, 2034, 1876],
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            borderColor: '#3b82f6',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // ApexCharts
+      initializeFunnelChart();
+      initializeGeoHeatmap();
+      initializeHourlyHeatmap();
+      initializeCohortChart();
     }
 
-    // Funil de Conversão
-    var funnelOptions = {
-      chart: {
-        type: 'bar',
-        height: 300
-      },
-      plotOptions: {
-        bar: {
-          horizontal: true,
-          barHeight: '80%'
-        }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      colors: ['#FF9800', '#03A9F4', '#4CAF50'],
-      series: [{
-        data: [100, 70, 30]
-      }],
-      xaxis: {
-        categories: ['Visualização', 'Adição ao Carrinho', 'Compra']
-      }
-    };
-    var funnelChart = new ApexCharts(document.querySelector("#funnel-chart"), funnelOptions);
-    funnelChart.render();
-
-    // Exportar Dados
-    function exportData() {
-      Email.send({
-        Host: "smtp.elasticemail.com",
-        Username: "your-email@example.com",
-        Password: "your-email-password",
-        To: 'recipient@example.com',
-        From: "your-email@example.com",
-        Subject: "Relatório de Tráfego Pago",
-        Body: "Segue o relatório exportado do dashboard.",
-        Attachments: [
-          {
-            name: "relatorio.csv",
-            path: "data:text/csv;charset=utf-8," + encodeURIComponent("Impressões,Cliques,Conversões\n50000,12000,3000")
+    function initializeFunnelChart() {
+      const funnelOptions = {
+        series: [{
+          name: 'Funil',
+          data: [100, 65, 28, 12, 8]
+        }],
+        chart: {
+          type: 'bar',
+          height: 300
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            barHeight: '80%',
+            distributed: true
           }
-        ]
-      }).then(
-        message => alert("Relatório enviado com sucesso!")
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) {
+            return val + '%'
+          }
+        },
+        xaxis: {
+          categories: ['Impressão', 'Clique', 'Visualização', 'Carrinho', 'Compra']
+        },
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+      };
+      
+      new ApexCharts(document.querySelector("#funnelChart"), funnelOptions).render();
+    }
+
+    function initializeGeoHeatmap() {
+      const geoOptions = {
+        series: [{
+          name: 'SP',
+          data: generateRandomData(12, 25, 65)
+        }, {
+          name: 'RJ',
+          data: generateRandomData(12, 20, 55)
+        }, {
+          name: 'MG',
+          data: generateRandomData(12, 15, 45)
+        }, {
+          name: 'RS',
+          data: generateRandomData(12, 10, 35)
+        }],
+        chart: {
+          height: 300,
+          type: 'heatmap'
+        },
+        dataLabels: {
+          enabled: false
+        },
+        colors: ["#3b82f6"],
+        title: {
+          text: 'Performance por Estado (últimos 12 meses)'
+        }
+      };
+      
+      new ApexCharts(document.querySelector("#geoHeatmap"), geoOptions).render();
+    }
+
+    function initializeHourlyHeatmap() {
+      const hourlyOptions = {
+        series: [{
+          name: 'Dom',
+          data: generateRandomData(24, 10, 90)
+        }, {
+          name: 'Seg',
+          data: generateRandomData(24, 15, 85)
+        }, {
+          name: 'Ter',
+          data: generateRandomData(24, 12, 88)
+        }, {
+          name: 'Qua',
+          data: generateRandomData(24, 14, 86)
+        }, {
+          name: 'Qui',
+          data: generateRandomData(24, 16, 92)
+        }, {
+          name: 'Sex',
+          data: generateRandomData(24, 18, 95)
+        }, {
+          name: 'Sáb',
+          data: generateRandomData(24, 8, 75)
+        }],
+        chart: {
+          height: 300,
+          type: 'heatmap'
+        },
+        dataLabels: {
+          enabled: false
+        },
+        colors: ["#10b981"],
+        xaxis: {
+          categories: Array.from({length: 24}, (_, i) => i + 'h')
+        }
+      };
+      
+      new ApexCharts(document.querySelector("#hourlyHeatmap"), hourlyOptions).render();
+    }
+
+    function initializeCohortChart() {
+      const cohortOptions = {
+        series: [{
+          name: 'Semana 1',
+          data: [100, 85, 72, 68, 65, 62, 60]
+        }, {
+          name: 'Semana 2',
+          data: [100, 88, 76, 71, 69, 66, 64]
+        }, {
+          name: 'Semana 3',
+          data: [100, 82, 69, 64, 61, 58, 56]
+        }],
+        chart: {
+          height: 300,
+          type: 'heatmap'
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) {
+            return val + '%'
+          }
+        },
+        colors: ["#8b5cf6"],
+        xaxis: {
+          categories: ['Dia 1', 'Dia 7', 'Dia 14', 'Dia 21', 'Dia 28', 'Dia 35', 'Dia 42']
+        }
+      };
+      
+      new ApexCharts(document.querySelector("#cohortChart"), cohortOptions).render();
+    }
+
+    function generateRandomData(count, min, max) {
+      return Array.from({length: count}, () => 
+        Math.floor(Math.random() * (max - min + 1)) + min
       );
     }
+
+    function updateTimeSeriesChart(metric) {
+      const data = mockData.timeSeries[metric];
+      const colors = {
+        impressions: '#3b82f6',
+        clicks: '#10b981',
+        conversions: '#f59e0b'
+      };
+      
+      timeSeriesChart.data.datasets[0].data = data;
+      timeSeriesChart.data.datasets[0].borderColor = colors[metric];
+      timeSeriesChart.data.datasets[0].backgroundColor = colors[metric] + '20';
+      timeSeriesChart.data.datasets[0].label = metric.charAt(0).toUpperCase() + metric.slice(1);
+      timeSeriesChart.update();
+      
+      // Update button states
+      document.querySelectorAll('.chart-container button').forEach(btn => {
+        btn.className = 'text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full';
+      });
+      event.target.className = 'text-sm px-3 py-1 bg-blue-100 text-blue-600 rounded-full';
+    }
+
+    function setupEventListeners() {
+      document.getElementById('timeRange').addEventListener('change', function() {
+        updateDashboard();
+      });
+      
+      document.getElementById('channelFilter').addEventListener('change', function() {
+        updateDashboard();
+      });
+    }
+
+    function updateDashboard() {
+      // Simulate data update based on filters
+      animateCounters();
+    }
+
+    function animateCounters() {
+      const counters = document.querySelectorAll('.animated-counter');
+      counters.forEach(counter => {
+        counter.style.animation = 'none';
+        counter.offsetHeight; // Trigger reflow
+        counter.style.animation = 'countUp 1s ease-out';
+      });
+    }
+
+    function toggleAutoRefresh() {
+      const icon = document.getElementById('refreshIcon');
+      
+      if (isAutoRefreshOn) {
+        clearInterval(autoRefreshInterval);
+        icon.classList.remove('fa-spin');
+        isAutoRefreshOn = false;
+      } else {
+        autoRefreshInterval = setInterval(updateDashboard, 30000); // 30 seconds
+        icon.classList.add('fa-spin');
+        isAutoRefreshOn = true;
+      }
+    }
+
+    function exportReport() {
+      // Simulate export functionality
+      const data = {
+        date: new Date().toISOString(),
+        metrics: {
+          totalSpend: 'R$ 125.450',
+          roas: '4.8x',
+          avgCPA: 'R$ 45.20',
+          conversionRate: '3.24%',
+          impressions: '2.8M',
+          clicks: '89.5K',
+          ctr: '3.19%',
+          conversions: '2.9K'
+        }
+      };
+      
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio-trafego-pago-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+    }
+
+    function startDataSimulation() {
+      // Simulate real-time data updates
+      setInterval(() => {
+        if (isAutoRefreshOn) {
+          // Update random metrics slightly
+          updateRandomMetrics();
+        }
+      }, 5000);
+    }
+
+    function updateRandomMetrics() {
+      const elements = {
+        'impressions': document.getElementById('impressions'),
+        'clicks': document.getElementById('clicks'),
+        'ctr': document.getElementById('ctr'),
+        'conversions': document.getElementById('conversions')
+      };
+      
+      // Simulate small random changes
+      Object.keys(elements).forEach(key => {
+        const element = elements[key];
+        if (element) {
+          const currentValue = element.textContent;
+          // Add small random variation
+          const variation = (Math.random() - 0.5) * 0.02; // ±1%
+          // Apply variation logic based on metric type
+          // This is just for demo - in real app, this would come from API
+          element.style.animation = 'countUp 0.5s ease-out';
+        }
+      });
+    }
+
+    // Performance monitoring
+    function trackPerformance() {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          console.log('Performance:', entry.name, entry.duration);
+        }
+      });
+      observer.observe({entryTypes: ['measure']});
+    }
+
+    // Initialize performance tracking
+    trackPerformance();
   </script>
 </body>
 </html>
